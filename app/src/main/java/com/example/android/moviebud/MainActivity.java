@@ -1,84 +1,133 @@
 package com.example.android.moviebud;
 
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import android.speech.tts.TextToSpeech;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity{
-    Button recBtn,playBtn;
     SpeechRecognizer recognizer;
     Intent recognitionIntent;
-    TextToSpeech speaker;
-    private final int SPEECH_RECOGNITION_CODE=1;
+    //TextToSpeech speaker;
+    FloatingActionButton speakNow;
+    TextView tv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        recBtn = (Button) findViewById(R.id.recBtn);
-
-        recBtn.setOnClickListener(new View.OnClickListener() {
+        speakNow = (FloatingActionButton)findViewById(R.id.floatingActionButton);
+        speakNow.setSize(FloatingActionButton.SIZE_NORMAL);
+        tv=(TextView)findViewById(R.id.speech);
+        //just testing
+        recognizer=SpeechRecognizer.createSpeechRecognizer(this);
+        recognitionIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        recognitionIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        recognitionIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName());
+        recognitionIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+        recognizer.setRecognitionListener(new RecognitionListener() {
             @Override
-            public void onClick(View view) {
-                recognitionIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            public void onReadyForSpeech(Bundle bundle) {
+
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+
+            }
+
+            @Override
+            public void onRmsChanged(float v) {
+
+            }
+
+            @Override
+            public void onBufferReceived(byte[] bytes) {
+
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+
+            }
+
+            @Override
+            public void onError(int i) {
                 //recognizer.startListening(recognitionIntent);
-                recognitionIntent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                        "Say something...");
-                try {
-                    startActivityForResult(recognitionIntent,SPEECH_RECOGNITION_CODE);
-                } catch (ActivityNotFoundException a) {
-                    Toast.makeText(getApplicationContext(),
-                            "Sorry! Speech recognition is not supported in this device.",
-                            Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(getApplicationContext(),"some error happened",Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onResults(Bundle bundle) {
+                ArrayList<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                tv.setText(matches.get(0));
+            }
+
+            @Override
+            public void onPartialResults(Bundle bundle) {
+                ArrayList<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                tv.setText(matches.get(0));
+            }
+
+            @Override
+            public void onEvent(int i, Bundle bundle) {
+
             }
         });
 
-        playBtn = (Button) findViewById(R.id.playBtn);
+        speakNow.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                recognizer.startListening(recognitionIntent);
+                //ViewAnimationUtils.createCircularReveal();
+            }
+        });
+
+
+        /*playBtn = (Button) findViewById(R.id.playBtn);
         playBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 speaker = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
                     @Override
                     public void onInit(int i) {
                         speaker.setLanguage(Locale.US);
                         CharSequence c=((TextView)findViewById(R.id.speech)).getText().toString();
                         speaker.speak(c,TextToSpeech.QUEUE_FLUSH,null,"0");
+                    }
+                });
+
+                speaker.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String s) {
+
+                    }
+
+                    @Override
+                    public void onDone(String s) {
                         speaker.shutdown();
-                        speaker.stop();
+                    }
+
+                    @Override
+                    public void onError(String s) {
+
                     }
                 });
             }
-        });
+        });*/
     }
-
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode==SPEECH_RECOGNITION_CODE){
-            TextView tv=(TextView)findViewById(R.id.speech);
-            ArrayList<String>al=data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-            tv.setText(al.get(0));
-
-        }
-    }
-
-    public void onPause(){
-        if(speaker !=null){
-            speaker.stop();
-            speaker.shutdown();
-        }
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
+        recognizer.destroy();
     }
 }
