@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity{
         chatLayout=(RelativeLayout)findViewById(R.id.chatLayout);
 
         movies=new HashMap<String,List<String>>();
-        movies.put("1980s",new ArrayList<String>(){{
+        movies.put("1980s 1980's",new ArrayList<String>(){{
             add("E.T.: The Extra-Terrestrial");
             add("Star Wars: Episode VI - Return of the Jedi");
             add("Star Wars: Episode V - The Empire Strikes Back");
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity{
             add("Men in Black");
             add("Toy Story 2");
         }});
-        movies.put("2000s",new ArrayList<String>(){{
+        movies.put("2000s 2000's",new ArrayList<String>(){{
             add("Avatar");
             add("The Dark Knight");
             add("Shrek 2");
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity{
             add("Spider-Man 2");
             add("The Passion of the Christ");
         }});
-        movies.put("2010s",new ArrayList<String>(){{
+        movies.put("2010s 2010's",new ArrayList<String>(){{
             add("Star Wars: Episode VII - The Force Awakens");
             add("Jurassic World");
             add("Marvel's The Avengers");
@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity{
 
             @Override
             public void onBeginningOfSpeech() {
-                //tv.setText("");
+                speechBox.setText("");
             }
 
             @Override
@@ -128,9 +128,7 @@ public class MainActivity extends AppCompatActivity{
 
             @Override
             public void onEndOfSpeech() {
-                hideMenu();
                 //tv.setText(speechBox.getText());
-                speechBox.setText("");
             }
 
             @Override
@@ -143,6 +141,12 @@ public class MainActivity extends AppCompatActivity{
             public void onResults(Bundle bundle) {
                 ArrayList<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 speechBox.setText(matches.get(0));
+                try{
+                    Thread.sleep(700);
+                }
+                catch (Exception e){
+
+                }
                 showMovieList();
             }
 
@@ -161,13 +165,9 @@ public class MainActivity extends AppCompatActivity{
         speakNow.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
-                if(!isOpen){
+                if(!isOpen && (speaker==null || !speaker.isSpeaking())){
                     showMenu();
                     recognizer.startListening(recognitionIntent);
-                }
-                else{
-                    hideMenu();
-                    recognizer.stopListening();
                 }
             }
         });
@@ -183,15 +183,17 @@ public class MainActivity extends AppCompatActivity{
         int left=chatLayout.getLeft();
         int bottom=chatLayout.getBottom();
         int top=chatLayout.getTop();
-        int x=speakNow.getLeft();
-        int y=speakNow.getBottom();
+        int x=(int)chatLayout.getWidth()/2;
+        int y=(int)chatLayout.getHeight()-(int)speakNow.getHeight()/2;
         int r0=0;
         int r1=(int)Math.hypot(chatLayout.getWidth(),chatLayout.getHeight());
         speakNow.setImageResource(R.drawable.ic_mic_off_white_24dp);
 
         Animator animator= ViewAnimationUtils.createCircularReveal(chatLayout,x,y,r0,r1);
-        chatLayout.setVisibility(View.VISIBLE);
+        animator.setDuration(300);
         animator.start();
+        chatLayout.setVisibility(View.VISIBLE);
+        speakNow.setVisibility(View.INVISIBLE);
         isOpen=true;
     }
     public void hideMenu(){
@@ -199,15 +201,17 @@ public class MainActivity extends AppCompatActivity{
         int left=chatLayout.getLeft();
         int bottom=chatLayout.getBottom();
         int top=chatLayout.getTop();
-        int x=speakNow.getLeft();
-        int y=speakNow.getBottom();
+        int x=(int)chatLayout.getWidth()/2;
+        int y=(int)chatLayout.getHeight()-(int)speakNow.getHeight()/2;
         int r0=0;
         int r1=(int)Math.hypot(chatLayout.getWidth(),chatLayout.getHeight());
         speakNow.setImageResource(R.drawable.ic_mic_white_24dp);
 
         Animator animator= ViewAnimationUtils.createCircularReveal(chatLayout,x,y,r1,r0);
-        chatLayout.setVisibility(View.INVISIBLE);
+        animator.setDuration(300);
         animator.start();
+        chatLayout.setVisibility(View.INVISIBLE);
+        speakNow.setVisibility(View.VISIBLE);
         isOpen=false;
     }
 
@@ -230,8 +234,11 @@ public class MainActivity extends AppCompatActivity{
             speak(input);
         }
         else{
+            movieSection.setAdapter(null);
             speak("");
         }
+        speechBox.setText("");
+        hideMenu();
     }
 
     public void speak(final String input){
@@ -240,7 +247,7 @@ public class MainActivity extends AppCompatActivity{
             public void onInit(int i) {
                 speaker.setLanguage(Locale.US);
                 CharSequence c="";
-                if(!input.equals(""))c="Here is the list of top 10 movies from "+input;
+                if(!input.equals(""))c="Here is the list of top movies from "+input;
                 else c="Sorry, could not find any relevant results from the search";
                 speaker.speak(c,TextToSpeech.QUEUE_FLUSH,null,"0");
                 hideMenu();
@@ -250,7 +257,6 @@ public class MainActivity extends AppCompatActivity{
         speaker.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override
             public void onStart(String s) {
-
             }
 
             @Override
