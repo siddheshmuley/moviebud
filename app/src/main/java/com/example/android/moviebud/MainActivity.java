@@ -1,6 +1,5 @@
 package com.example.android.moviebud;
 
-import android.animation.Animator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
@@ -11,8 +10,7 @@ import android.speech.tts.UtteranceProgressListener;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.view.ViewAnimationUtils;
-import android.widget.ArrayAdapter;
+import android.widget.HorizontalScrollView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -29,15 +27,15 @@ public class MainActivity extends AppCompatActivity{
     Intent recognitionIntent;
     TextToSpeech speaker;
     FloatingActionButton speakNow;
-    //TextView tv;
     TextView speechBox;
-    ListView movieSection;
+    ListView chatView;
+    HorizontalScrollView scrollView;
     boolean isOpen=false,isListening=false;
     RelativeLayout chatLayout;
     public Map<String,List<String>>movies;
-    ArrayAdapter<String>movieAdapter;
-
-
+    MessageAdapter movieAdapter;
+    List<ChatMessage> messageList;
+    String currentText="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,11 +43,9 @@ public class MainActivity extends AppCompatActivity{
         setContentView(R.layout.activity_main);
         speakNow = (FloatingActionButton)findViewById(R.id.floatingActionButton);
         speakNow.setSize(FloatingActionButton.SIZE_NORMAL);
-        movieSection = (ListView)findViewById(R.id.movieList);
+        chatView = findViewById(R.id.chatView);
         //tv=(TextView)findViewById(R.id.speech);
-        speechBox=(TextView)findViewById(R.id.speechBox);
-        chatLayout=(RelativeLayout)findViewById(R.id.chatLayout);
-
+        scrollView = (HorizontalScrollView)findViewById(R.id.scroll_view1);
         movies=new HashMap<String,List<String>>();
         movies.put("1980s 1980's",new ArrayList<String>(){{
             add("E.T.: The Extra-Terrestrial");
@@ -99,7 +95,11 @@ public class MainActivity extends AppCompatActivity{
             add("The Hunger Games: Catching Fire");
             add("Toy Story 3");
         }});
-        //just testing
+
+        messageList=new ArrayList<ChatMessage>();
+        movieAdapter=new MessageAdapter(this,R.layout.my_message,messageList);
+        chatView.setAdapter(movieAdapter);
+
         recognizer=SpeechRecognizer.createSpeechRecognizer(this);
         recognitionIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognitionIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity{
 
             @Override
             public void onBeginningOfSpeech() {
-                speechBox.setText("");
+                Toast.makeText(getApplicationContext(),"speech begins",Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -128,7 +128,6 @@ public class MainActivity extends AppCompatActivity{
 
             @Override
             public void onEndOfSpeech() {
-                //tv.setText(speechBox.getText());
             }
 
             @Override
@@ -140,20 +139,21 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onResults(Bundle bundle) {
                 ArrayList<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                speechBox.setText(matches.get(0));
+                currentText=matches.get(0);
+                messageList.add(new ChatMessage(1,currentText));
                 try{
                     Thread.sleep(700);
                 }
                 catch (Exception e){
 
                 }
+                movieAdapter.notifyDataSetChanged();
                 showMovieList();
             }
 
             @Override
             public void onPartialResults(Bundle bundle) {
                 ArrayList<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                speechBox.setText(matches.get(0));
             }
 
             @Override
@@ -166,7 +166,6 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 if(!isOpen && (speaker==null || !speaker.isSpeaking())){
-                    showMenu();
                     recognizer.startListening(recognitionIntent);
                 }
             }
@@ -178,45 +177,8 @@ public class MainActivity extends AppCompatActivity{
         recognizer.destroy();
     }
 
-    public void showMenu(){
-        int right=chatLayout.getRight();
-        int left=chatLayout.getLeft();
-        int bottom=chatLayout.getBottom();
-        int top=chatLayout.getTop();
-        int x=(int)chatLayout.getWidth()/2;
-        int y=(int)chatLayout.getHeight()-(int)speakNow.getHeight()/2;
-        int r0=0;
-        int r1=(int)Math.hypot(chatLayout.getWidth(),chatLayout.getHeight());
-        speakNow.setImageResource(R.drawable.ic_mic_off_white_24dp);
-
-        Animator animator= ViewAnimationUtils.createCircularReveal(chatLayout,x,y,r0,r1);
-        animator.setDuration(300);
-        animator.start();
-        chatLayout.setVisibility(View.VISIBLE);
-        speakNow.setVisibility(View.INVISIBLE);
-        isOpen=true;
-    }
-    public void hideMenu(){
-        int right=chatLayout.getRight();
-        int left=chatLayout.getLeft();
-        int bottom=chatLayout.getBottom();
-        int top=chatLayout.getTop();
-        int x=(int)chatLayout.getWidth()/2;
-        int y=(int)chatLayout.getHeight()-(int)speakNow.getHeight()/2;
-        int r0=0;
-        int r1=(int)Math.hypot(chatLayout.getWidth(),chatLayout.getHeight());
-        speakNow.setImageResource(R.drawable.ic_mic_white_24dp);
-
-        Animator animator= ViewAnimationUtils.createCircularReveal(chatLayout,x,y,r1,r0);
-        animator.setDuration(300);
-        animator.start();
-        chatLayout.setVisibility(View.INVISIBLE);
-        speakNow.setVisibility(View.VISIBLE);
-        isOpen=false;
-    }
-
     public void showMovieList(){
-        String []text=speechBox.getText().toString().split(" ");
+        String []text=currentText.split(" ");
         List<String>result=null;
         String input="";
         for(String k:movies.keySet()){
@@ -228,20 +190,13 @@ public class MainActivity extends AppCompatActivity{
                 }
             }
         }
-        if(result!=null){
-            movieAdapter=new ArrayAdapter<String>(getApplicationContext(),R.layout.listrow, R.id.row,result);
-            movieSection.setAdapter(movieAdapter);
-            speak(input);
-        }
-        else{
-            movieSection.setAdapter(null);
-            speak("");
-        }
-        speechBox.setText("");
-        hideMenu();
+        if(result!=null)
+            speak(input, result);
+        else
+            speak("",null);
     }
 
-    public void speak(final String input){
+    public void speak(final String input, final List<String> result){
         speaker = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int i) {
@@ -249,15 +204,27 @@ public class MainActivity extends AppCompatActivity{
                 CharSequence c="";
                 if(!input.equals(""))c="Here is the list of top movies from "+input;
                 else c="Sorry, could not find any relevant results from the search";
+
+                messageList.add(new ChatMessage(2,c.toString()));
                 speaker.speak(c,TextToSpeech.QUEUE_FLUSH,null,"0");
-                hideMenu();
+                movieAdapter.notifyDataSetChanged();
+
+                if(result!=null){
+                    String x="";
+                    int z=1;
+                    for(String s:result){
+                        x+=z+". "+s+"\n";
+                        z++;
+                    }
+                    messageList.add(new ChatMessage(3,x));
+                    movieAdapter.notifyDataSetChanged();
+                }
             }
         });
 
         speaker.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override
-            public void onStart(String s) {
-            }
+            public void onStart(String s) {}
 
             @Override
             public void onDone(String s) {
@@ -265,9 +232,9 @@ public class MainActivity extends AppCompatActivity{
             }
 
             @Override
-            public void onError(String s) {
-
-            }
+            public void onError(String s) {}
         });
+
+
     }
 }
