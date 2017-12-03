@@ -6,17 +6,15 @@
     android:layout_height="match_parent"
     tools:context="com.example.android.moviebud.MainActivity"
     >
-
     <ProgressBar
         android:id="@+id/progress_horizontal"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:indeterminate="true"
-        android:layout_marginTop="-7dp"
-        android:visibility="invisible"
-        android:elevation="6dp"/>
+        android:layout_marginTop="-7dp"/>
     <ListView
+        android:layout_below="@id/progress_horizontal"
         android:id="@+id/chatView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -48,4 +46,5 @@
         app:fabSize="normal"
         app:rippleColor="#ed36ed"
         />
+
 </RelativeLayout>

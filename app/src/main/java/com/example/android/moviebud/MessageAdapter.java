@@ -56,14 +56,14 @@ public class MessageAdapter extends ArrayAdapter<ChatMessage> {
     public int getViewTypeCount() {
         // return the total number of view types. this value should never change
         // at runtime. Value 2 is returned because of left and right views.
-        return 3;
+        return 4;
     }
 
     @Override
     public int getItemViewType(int position) {
         // return a value between 0 and (getViewTypeCount - 1)
         //list.get(position);
-        return position%3;
+        return position%4;
     }
 
     public class ViewHolder {

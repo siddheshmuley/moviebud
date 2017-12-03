@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -26,8 +27,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity{
     SpeechRecognizer recognizer;
@@ -35,8 +38,9 @@ public class MainActivity extends AppCompatActivity{
     FloatingActionButton fab;
     ListView chatView;
     TextToSpeech tts;
-    boolean isListening=false, isSpeaking=false;
-
+    boolean isListening=false, isVideo=false, isError=false, isSpeaking=false;
+    RelativeLayout chatLayout;
+    public Map<String,List<String>>movies;
     MessageAdapter movieAdapter;
     ProgressBar loop, line;
     List<ChatMessage> messageList;
@@ -49,15 +53,71 @@ public class MainActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        fab = (FloatingActionButton) findViewById(R.id.floatingActionButton);
+        fab = (FloatingActionButton)findViewById(R.id.floatingActionButton);
         fab.setSize(FloatingActionButton.SIZE_NORMAL);
         chatView = findViewById(R.id.chatView);
-
+        /*chatView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Toast.makeText(getApplicationContext(),"listitem clicked",Toast.LENGTH_SHORT).show();
+            }
+        });*/
         loop=(ProgressBar) findViewById(R.id.progress_bar);
         line=(ProgressBar) findViewById(R.id.progress_horizontal);
 
 
+
         queue = Volley.newRequestQueue(this);
+        //tv=(TextView)findViewById(R.id.speech);
+        movies=new HashMap<String,List<String>>();
+        movies.put("1980s 1980's",new ArrayList<String>(){{
+            add("E.T.: The Extra-Terrestrial");
+            add("Star Wars: Episode VI - Return of the Jedi");
+            add("Star Wars: Episode V - The Empire Strikes Back");
+            add("Batman");
+            add("Raiders of the Lost Ark");
+            add("Ghostbusters");
+            add("Beverly Hills Cop");
+            add("Back to the Future");
+            add("Indiana Jones and the Last Crusade");
+            add("Indiana Jones and the Temple of Doom");
+        }});
+        movies.put("1990s 1990's",new ArrayList<String>(){{
+            add("Titanic");
+            add("Star Wars: Episode I - The Phantom Menace");
+            add("Jurassic Park");
+            add("The Lion King");
+            add("Forrest Gump");
+            add("Independence Day");
+            add("The Sixth Sense");
+            add("Home Alone");
+            add("Men in Black");
+            add("Toy Story 2");
+        }});
+        movies.put("2000s 2000's",new ArrayList<String>(){{
+            add("Avatar");
+            add("The Dark Knight");
+            add("Shrek 2");
+            add("Pirates of the Caribbean: Dead Man's Chest");
+            add("Spider-Man");
+            add("Transformers: Revenge of the Fallen");
+            add("Star Wars: Episode III - Revenge of the Sith");
+            add("The Lord of the Rings: The Return of the King");
+            add("Spider-Man 2");
+            add("The Passion of the Christ");
+        }});
+        movies.put("2010s 2010's",new ArrayList<String>(){{
+            add("Star Wars: Episode VII - The Force Awakens");
+            add("Jurassic World");
+            add("Marvel's The Avengers");
+            add("Rogue One: A Star Wars Story");
+            add("Beauty and the Beast");
+            add("Finding Dory");
+            add("Avengers: Age of Ultron");
+            add("The Dark Knight Rises");
+            add("The Hunger Games: Catching Fire");
+            add("Toy Story 3");
+        }});
 
         messageList=new ArrayList<ChatMessage>();
         movieAdapter=new MessageAdapter(this,R.layout.my_message,messageList);
@@ -71,7 +131,7 @@ public class MainActivity extends AppCompatActivity{
         recognizer.setRecognitionListener(new RecognitionListener() {
             @Override
             public void onReadyForSpeech(Bundle bundle) {
-                Toast.makeText(getApplicationContext(),"asdjaskjdas",Toast.LENGTH_SHORT).show();
+
             }
 
             @Override
@@ -98,7 +158,7 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onError(int i) {
                 //recognizer.startListening(recognitionIntent);
-                Toast.makeText(getApplicationContext(),"some error 1234",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"some error happened",Toast.LENGTH_SHORT).show();
                 isListening=false;
                 flipFAB();
             }
@@ -171,7 +231,7 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="I could get you a link to a video related to any of these movies, if you like.";
-                    speak(c+"@@@"+s);
+                    speak(c+"$$$"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -180,7 +240,7 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="I could get you a link to a video related to any of these movies, if you like.";
-                    speak(c+"@@@"+s);
+                    speak(c+"$$$"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -189,7 +249,7 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="I could get you a link to a video related to any of these movies, if you like.";
-                    speak(c+"@@@"+s);
+                    speak(c+"$$$"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -198,7 +258,7 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="Would you like to watch it?";
-                    speak(c+"@@@"+s);
+                    speak(c+"$$$"+s);
                     updateListView(new ChatMessage(4,result,true));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -207,7 +267,7 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="I could get you a link to a video related to any of these movies, if you like.";
-                    speak(c+"@@@"+s);
+                    speak(c+"$$$"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -235,7 +295,7 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onInit(int i) {
                 isSpeaking=true;
-                for(String ip:input.split("@@@")){
+                for(String ip:input.split("***")){
                     tts.speak(ip, TextToSpeech.QUEUE_ADD,null,null);
                     tts.playSilentUtterance(100,TextToSpeech.QUEUE_ADD,null);
                 }
