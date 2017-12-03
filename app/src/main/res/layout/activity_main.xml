@@ -6,20 +6,16 @@
     android:layout_height="match_parent"
     tools:context="com.example.android.moviebud.MainActivity"
     >
-    <HorizontalScrollView
-        android:id="@+id/scroll_view1"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        xmlns:android="http://schemas.android.com/apk/res/android">
-        <LinearLayout
-            android:id="@+id/scroll_view_linear1"
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
 
-        </LinearLayout>
-    </HorizontalScrollView>
+    <ProgressBar
+        android:id="@+id/progress_horizontal"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:layout_marginTop="-7dp"
+        android:visibility="invisible"
+        android:elevation="6dp"/>
     <ListView
         android:id="@+id/chatView"
         android:layout_width="match_parent"
@@ -30,7 +26,16 @@
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="0dp"
         />
-
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar"
+        android:theme="@style/CircularProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="19dp"
+        android:elevation="6dp"/>
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/floatingActionButton"
         android:layout_width="wrap_content"
@@ -43,5 +48,4 @@
         app:fabSize="normal"
         app:rippleColor="#ed36ed"
         />
-
 </RelativeLayout>

@@ -2,6 +2,6 @@
 <resources>
     <color name="colorPrimary">#404040</color>
     <color name="colorPrimaryDark">#404040</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorAccent">#404040</color>
     <color name="grad"></color>
 </resources>

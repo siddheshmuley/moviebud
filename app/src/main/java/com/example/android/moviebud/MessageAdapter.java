@@ -1,6 +1,7 @@
 package com.example.android.moviebud;
 
 import android.app.Activity;
+import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,14 +36,19 @@ public class MessageAdapter extends ArrayAdapter<ChatMessage> {
         else if(viewType==2){
             resource = R.layout.their_message;
         }
+        else if(viewType==4){
+            resource = R.layout.video;
+        }
         else{
             resource=R.layout.horizontal_list;
         }
         convertView=inflater.inflate(resource,parent,false);
-        holder=new ViewHolder(convertView){
-        };
+        holder=new ViewHolder(convertView);
         convertView.setTag(holder);
         holder.msg.setText(message.getData());
+        if(message.isURL()){
+            Linkify.addLinks(holder.msg,Linkify.WEB_URLS);
+        }
         return convertView;
     }
 
