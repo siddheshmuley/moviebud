@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity{
         }});
 
         Set<String> videoMap = new HashSet();
-        videoMap.add()
+        //videoMap.add()
 
         messageList=new ArrayList<ChatMessage>();
         movieAdapter=new MessageAdapter(this,R.layout.my_message,messageList);
