@@ -4,18 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingTop="8dp">
+
     <TextView
         android:id="@+id/message_body"
-        android:text="hello, hello!"
-        android:background="@drawable/rounded_orange"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_margin="10dp"
+        android:background="@drawable/rounded_orange"
+
         android:fontFamily="@font/open_sans"
-        android:textSize="14dp"
         android:maxWidth="240dp"
         android:padding="8dp"
+        android:text="hello, hello!"
         android:textColor="#ffffff"
-        android:layout_margin="10dp"
-        android:layout_alignParentLeft="true"
-        />
+        android:textSize="16dp" />
 </RelativeLayout>

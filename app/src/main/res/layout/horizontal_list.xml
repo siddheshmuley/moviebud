@@ -23,7 +23,7 @@
         android:paddingRight="10dp"
         android:lineSpacingExtra="10dp"
         android:fontFamily="@font/open_sans"
-        android:textSize="14dp"
+        android:textSize="16dp"
         android:text="hello, hello!"
         android:elevation="2dp"
         android:textColor="#000000" />

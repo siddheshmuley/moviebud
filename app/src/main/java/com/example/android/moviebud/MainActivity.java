@@ -11,9 +11,11 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -28,9 +30,11 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity{
     SpeechRecognizer recognizer;
@@ -39,15 +43,18 @@ public class MainActivity extends AppCompatActivity{
     ListView chatView;
     TextToSpeech tts;
     boolean isListening=false, isVideo=false, isError=false, isSpeaking=false;
-    RelativeLayout chatLayout;
+    RelativeLayout tutorial, base;
     public Map<String,List<String>>movies;
     MessageAdapter movieAdapter;
     ProgressBar loop, line;
     List<ChatMessage> messageList;
-    String currentText="", url ="http://192.168.0.21:8000/my/?msg=", result="";
+    Button skip,next;
+    String currentText="", url ="https://gentle-ravine-18226.herokuapp.com/mBud/?msg=", result="";
     String c="";
     RequestQueue queue;
     JsonObjectRequest request;
+    int pos=0;
+    TextView tutorialText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,16 +63,48 @@ public class MainActivity extends AppCompatActivity{
         fab = (FloatingActionButton)findViewById(R.id.floatingActionButton);
         fab.setSize(FloatingActionButton.SIZE_NORMAL);
         chatView = findViewById(R.id.chatView);
-        /*chatView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Toast.makeText(getApplicationContext(),"listitem clicked",Toast.LENGTH_SHORT).show();
-            }
-        });*/
+        skip=findViewById(R.id.skip_tutorial);
+        next=findViewById(R.id.next);
+        tutorial=(RelativeLayout)findViewById(R.id.tutorial_layout);
+        base=(RelativeLayout)findViewById(R.id.base_relative);
+        tutorialText=findViewById(R.id.tutorial_text);
         loop=(ProgressBar) findViewById(R.id.progress_bar);
         line=(ProgressBar) findViewById(R.id.progress_horizontal);
 
+        tutorial.post(new Runnable() {
 
+            public void run() {
+                tutorial.setVisibility(View.VISIBLE);
+                loop.setVisibility(View.INVISIBLE);
+                fab.setVisibility(View.INVISIBLE);
+                pos++;
+            }
+        });
+
+        skip.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View view) {
+                tutorial.setVisibility(View.INVISIBLE);
+                loop.setVisibility(View.VISIBLE);
+                fab.setVisibility(View.VISIBLE);
+                pos=0;
+            }
+        });
+
+        next.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View view) {
+                if(pos>=2){
+                    skip.performClick();
+                }
+                else{
+                    pos++;
+                    tutorialText.setText(getResources().getString(R.string.tutorial_2));
+                }
+            }
+        });
 
         queue = Volley.newRequestQueue(this);
         //tv=(TextView)findViewById(R.id.speech);
@@ -119,9 +158,15 @@ public class MainActivity extends AppCompatActivity{
             add("Toy Story 3");
         }});
 
+        Set<String> videoMap = new HashSet();
+        videoMap.add()
+
         messageList=new ArrayList<ChatMessage>();
         movieAdapter=new MessageAdapter(this,R.layout.my_message,messageList);
         chatView.setAdapter(movieAdapter);
+
+
+
 
         recognizer=SpeechRecognizer.createSpeechRecognizer(this);
         recognitionIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -212,8 +257,7 @@ public class MainActivity extends AppCompatActivity{
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                speak("Some error occurred");
-                speak("Some error occurred");
+                speak("I am sorry, I could not connect to the server. You can try again if you like!");
                 line.setVisibility(View.INVISIBLE);
                 Snackbar.make(chatView,"Error",Snackbar.LENGTH_SHORT).show();
             }
@@ -231,7 +275,7 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="I could get you a link to a video related to any of these movies, if you like.";
-                    speak(c+"$$$"+s);
+                    speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -240,7 +284,7 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="I could get you a link to a video related to any of these movies, if you like.";
-                    speak(c+"$$$"+s);
+                    speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -249,7 +293,7 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="I could get you a link to a video related to any of these movies, if you like.";
-                    speak(c+"$$$"+s);
+                    speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -257,17 +301,19 @@ public class MainActivity extends AppCompatActivity{
                     c="Here is the link to the trailer of "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="Would you like to watch it?";
-                    speak(c+"$$$"+s);
+                    String s="Simply click the link to watch the video!";
+                    String t="Or, I could help you look for other movies.";
+                    speak(c+"@@@"+s+"@@@"+t);
                     updateListView(new ChatMessage(4,result,true));
                     updateListView(new ChatMessage(2,s,false));
+                    updateListView(new ChatMessage(2,t,false));
                 }
                 else {
                     c="You searched for "+response.get("Input")+". Here are the results";
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s="I could get you a link to a video related to any of these movies, if you like.";
-                    speak(c+"$$$"+s);
+                    speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
@@ -295,7 +341,7 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onInit(int i) {
                 isSpeaking=true;
-                for(String ip:input.split("***")){
+                for(String ip:input.split("@@@")){
                     tts.speak(ip, TextToSpeech.QUEUE_ADD,null,null);
                     tts.playSilentUtterance(100,TextToSpeech.QUEUE_ADD,null);
                 }

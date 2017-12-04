@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">MovieBud</string>
+    <string name="tutorial_1">Hi! I am MovieBud. I will help you explore the world of movies.\n
+        \nClick NEXT to continue the tutorial
+    \n\nOR\n
+    \nClick SKIP to go to start exploring</string>
+    <string name="tutorial_2">
+        Click the mic and ask me to search for a movie.\n\n
+        I could search for specific movies, movies of a genre or movies similar to a title you like.</string>
 </resources>
