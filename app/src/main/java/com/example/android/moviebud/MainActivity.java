@@ -2,6 +2,7 @@ package com.example.android.moviebud;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -28,11 +29,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity{
     SpeechRecognizer recognizer;
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity{
     TextToSpeech tts;
     boolean isListening=false, isVideo=false, isError=false, isSpeaking=false;
     RelativeLayout tutorial, base;
-    public Map<String,List<String>>movies;
+    public ArrayList<String>movies;
     MessageAdapter movieAdapter;
     ProgressBar loop, line;
     List<ChatMessage> messageList;
@@ -53,7 +54,8 @@ public class MainActivity extends AppCompatActivity{
     JsonObjectRequest request;
     int pos=0;
     TextView tutorialText;
-    ArrayList<String> videoMap, videoMap2;
+    ArrayList<String> videoMap, videoMap2, videoMap3;
+    Set<String> set;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,9 +107,14 @@ public class MainActivity extends AppCompatActivity{
         });
 
         queue = Volley.newRequestQueue(this);
-        //tv=(TextView)findViewById(R.id.speech);
-        movies=new HashMap<String,List<String>>();
-        movies.put("1980s 1980's",new ArrayList<String>(){{
+        set=new HashSet(){{
+           add("i would like to watch a movie");
+           add("i'd like to watch a movie");
+           add("watch a movie");
+           add("i like to watch a movie");
+           add("show me some movies");
+        }};
+        movies=new ArrayList<String>(){{
             add("E.T.: The Extra-Terrestrial");
             add("Star Wars: Episode VI - Return of the Jedi");
             add("Star Wars: Episode V - The Empire Strikes Back");
@@ -118,8 +125,6 @@ public class MainActivity extends AppCompatActivity{
             add("Back to the Future");
             add("Indiana Jones and the Last Crusade");
             add("Indiana Jones and the Temple of Doom");
-        }});
-        movies.put("1990s 1990's",new ArrayList<String>(){{
             add("Titanic");
             add("Star Wars: Episode I - The Phantom Menace");
             add("Jurassic Park");
@@ -130,8 +135,6 @@ public class MainActivity extends AppCompatActivity{
             add("Home Alone");
             add("Men in Black");
             add("Toy Story 2");
-        }});
-        movies.put("2000s 2000's",new ArrayList<String>(){{
             add("Avatar");
             add("The Dark Knight");
             add("Shrek 2");
@@ -142,8 +145,6 @@ public class MainActivity extends AppCompatActivity{
             add("The Lord of the Rings: The Return of the King");
             add("Spider-Man 2");
             add("The Passion of the Christ");
-        }});
-        movies.put("2010s 2010's",new ArrayList<String>(){{
             add("Star Wars: Episode VII - The Force Awakens");
             add("Jurassic World");
             add("Marvel's The Avengers");
@@ -154,7 +155,7 @@ public class MainActivity extends AppCompatActivity{
             add("The Dark Knight Rises");
             add("The Hunger Games: Catching Fire");
             add("Toy Story 3");
-        }});
+        }};
 
         videoMap = new ArrayList();
         videoMap.add("Click the link to watch the video!");
@@ -164,13 +165,18 @@ public class MainActivity extends AppCompatActivity{
         videoMap2 = new ArrayList();
         videoMap2.add("Or I could help you look for other movies.");
         videoMap2.add("Or we could explore some more movies.");
+        videoMap2.add("Or if you don't like this, we could just keep looking.");
+
+        videoMap3 = new ArrayList();
+        videoMap3.add("Tell me the movie and I will get you the link");
+        videoMap3.add("Give me the movie name and a youtube link you shall receive");
+        videoMap3.add("Say the movie and get the youtube link");
+        videoMap3.add("Name the movie and I will get you it's youtube link.");
 
 
         messageList=new ArrayList<ChatMessage>();
         movieAdapter=new MessageAdapter(this,R.layout.my_message,messageList);
         chatView.setAdapter(movieAdapter);
-
-
 
 
         recognizer=SpeechRecognizer.createSpeechRecognizer(this);
@@ -240,6 +246,7 @@ public class MainActivity extends AppCompatActivity{
                 }
             }
         });
+
     }
     @Override
     protected void onDestroy() {
@@ -247,40 +254,66 @@ public class MainActivity extends AppCompatActivity{
         recognizer.destroy();
     }
 
+
     public void sendRequest(){
-        request= new JsonObjectRequest(Request.Method.GET,
-                url + currentText,
-                null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        line.setVisibility(View.INVISIBLE);
-                        parseResult(currentText, response);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                speak("I am sorry, I seem to be facing some technical difficulties!");
-                line.setVisibility(View.INVISIBLE);
-            }
-        });
-        request.setRetryPolicy(new DefaultRetryPolicy(
-                10000,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        // Add the request to the RequestQueue.
-        queue.add(request);
-        line.setVisibility(View.VISIBLE);
+        if(set.contains(currentText.toLowerCase())){
+            c="Here are some movies for you!";
+            updateListView(new ChatMessage(2,c.toString(),false));
+
+            Handler handler=new Handler();
+            line.setVisibility(View.VISIBLE);
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Random rand=new Random();
+                    int i=0;
+                    while(i++<5)
+                        result+=movies.get(rand.nextInt(movies.size()))+"\n";
+                    String s=videoMap3.get(rand.nextInt(videoMap3.size()));
+                    speak(c+"@@@"+s);
+                    updateListView(new ChatMessage(3,result,false));
+                    updateListView(new ChatMessage(2,s,false));
+                    line.setVisibility(View.INVISIBLE);
+                }
+            }, 500);
+
+        }
+        else{
+            request= new JsonObjectRequest(Request.Method.GET,
+                    url + currentText,
+                    null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            line.setVisibility(View.INVISIBLE);
+                            parseResult(currentText, response);
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    speak("I am sorry, I seem to be facing some technical difficulties!");
+                    line.setVisibility(View.INVISIBLE);
+                }
+            });
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                    10000,
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            // Add the request to the RequestQueue.
+            queue.add(request);
+            line.setVisibility(View.VISIBLE);
+        }
     }
 
     public void parseResult(String input, JSONObject response){
+        Random rand = new Random();
         try {
             if(response !=null && "Exact,Similar,Genre,Quest,Video".contains(response.get("State").toString())){
                 if(response.get("State").equals("Exact")){
                     c="Here are some results from the search for "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="Say the movie, and I will get you it's youtube link.";
+                    String s=videoMap3.get(rand.nextInt(videoMap3.size()));
                     speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
@@ -289,7 +322,7 @@ public class MainActivity extends AppCompatActivity{
                     c="Here are some movies similar to "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="Say the movie, and I will get you it's youtube link.";
+                    String s=videoMap3.get(rand.nextInt(videoMap3.size()));
                     speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
@@ -298,7 +331,7 @@ public class MainActivity extends AppCompatActivity{
                     c="Here are some results from the "+response.get("Input")+" genre.";
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="Say the movie, and I will get you it's youtube link.";
+                    String s=videoMap3.get(rand.nextInt(videoMap3.size()));
                     speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
@@ -307,7 +340,7 @@ public class MainActivity extends AppCompatActivity{
                     c="Here is the link to the trailer of "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    Random rand = new Random();
+
                     String s=videoMap.get(rand.nextInt(videoMap.size()));
                     String t=videoMap2.get(rand.nextInt(videoMap2.size()));
                     speak(c+"@@@"+s+"@@@"+t);
@@ -316,13 +349,9 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(2,t,false));
                 }
                 else {
-                    c="You searched for "+response.get("Input")+". Here are the results";
-                    updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="Say the movie, and I will get you it's youtube link.";
-                    speak(c+"@@@"+s);
-                    updateListView(new ChatMessage(3,result,false));
-                    updateListView(new ChatMessage(2,s,false));
+                    speak(result);
+                    updateListView(new ChatMessage(2,result,false));
                 }
             }
 
@@ -332,6 +361,7 @@ public class MainActivity extends AppCompatActivity{
                 speak(c);
             }
             else{
+
                 c="It seems I am facing some technical difficulties at the moment";
                 updateListView(new ChatMessage(2,c.toString(),false));
                 speak(c);
