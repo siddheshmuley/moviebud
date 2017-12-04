@@ -8,7 +8,6 @@ import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -16,8 +15,8 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -30,11 +29,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity{
     SpeechRecognizer recognizer;
@@ -55,6 +53,7 @@ public class MainActivity extends AppCompatActivity{
     JsonObjectRequest request;
     int pos=0;
     TextView tutorialText;
+    ArrayList<String> videoMap, videoMap2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +85,6 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 tutorial.setVisibility(View.INVISIBLE);
-                loop.setVisibility(View.VISIBLE);
                 fab.setVisibility(View.VISIBLE);
                 pos=0;
             }
@@ -158,8 +156,15 @@ public class MainActivity extends AppCompatActivity{
             add("Toy Story 3");
         }});
 
-        Set<String> videoMap = new HashSet();
-        //videoMap.add()
+        videoMap = new ArrayList();
+        videoMap.add("Click the link to watch the video!");
+        videoMap.add("You know the drill! Just click the link.");
+        videoMap.add("Click the link, you should.");
+
+        videoMap2 = new ArrayList();
+        videoMap2.add("Or I could help you look for other movies.");
+        videoMap2.add("Or we could explore some more movies.");
+
 
         messageList=new ArrayList<ChatMessage>();
         movieAdapter=new MessageAdapter(this,R.layout.my_message,messageList);
@@ -202,8 +207,6 @@ public class MainActivity extends AppCompatActivity{
 
             @Override
             public void onError(int i) {
-                //recognizer.startListening(recognitionIntent);
-                Toast.makeText(getApplicationContext(),"some error happened",Toast.LENGTH_SHORT).show();
                 isListening=false;
                 flipFAB();
             }
@@ -257,11 +260,14 @@ public class MainActivity extends AppCompatActivity{
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                speak("I am sorry, I could not connect to the server. You can try again if you like!");
+                speak("I am sorry, I seem to be facing some technical difficulties!");
                 line.setVisibility(View.INVISIBLE);
-                Snackbar.make(chatView,"Error",Snackbar.LENGTH_SHORT).show();
             }
         });
+        request.setRetryPolicy(new DefaultRetryPolicy(
+                10000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         // Add the request to the RequestQueue.
         queue.add(request);
         line.setVisibility(View.VISIBLE);
@@ -274,7 +280,7 @@ public class MainActivity extends AppCompatActivity{
                     c="Here are some results from the search for "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="I could get you a link to a video related to any of these movies, if you like.";
+                    String s="Say the movie, and I will get you it's youtube link.";
                     speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
@@ -283,16 +289,16 @@ public class MainActivity extends AppCompatActivity{
                     c="Here are some movies similar to "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="I could get you a link to a video related to any of these movies, if you like.";
+                    String s="Say the movie, and I will get you it's youtube link.";
                     speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
                 }
                 else if(response.get("State").equals("Genre")){
-                    c="Here are some results from the same genre as "+response.get("Input");
+                    c="Here are some results from the "+response.get("Input")+" genre.";
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="I could get you a link to a video related to any of these movies, if you like.";
+                    String s="Say the movie, and I will get you it's youtube link.";
                     speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
@@ -301,8 +307,9 @@ public class MainActivity extends AppCompatActivity{
                     c="Here is the link to the trailer of "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="Simply click the link to watch the video!";
-                    String t="Or, I could help you look for other movies.";
+                    Random rand = new Random();
+                    String s=videoMap.get(rand.nextInt(videoMap.size()));
+                    String t=videoMap2.get(rand.nextInt(videoMap2.size()));
                     speak(c+"@@@"+s+"@@@"+t);
                     updateListView(new ChatMessage(4,result,true));
                     updateListView(new ChatMessage(2,s,false));
@@ -312,7 +319,7 @@ public class MainActivity extends AppCompatActivity{
                     c="You searched for "+response.get("Input")+". Here are the results";
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s="I could get you a link to a video related to any of these movies, if you like.";
+                    String s="Say the movie, and I will get you it's youtube link.";
                     speak(c+"@@@"+s);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
@@ -376,6 +383,7 @@ public class MainActivity extends AppCompatActivity{
             fab.setImageResource(0);
             loop.setVisibility(View.VISIBLE);
             loop.bringToFront();
+            fab.setAlpha((float)1.0);
         }
         else{
             fab.setClickable(true);
@@ -383,6 +391,7 @@ public class MainActivity extends AppCompatActivity{
             loop.setVisibility(View.INVISIBLE);
             fab.bringToFront();
             fab.setClickable(true);
+            fab.setAlpha((float)0.5);
         }
     }
 }
