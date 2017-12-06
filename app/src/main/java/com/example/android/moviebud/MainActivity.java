@@ -2,7 +2,6 @@ package com.example.android.moviebud;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -29,11 +28,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-import java.util.Set;
 
 public class MainActivity extends AppCompatActivity{
     SpeechRecognizer recognizer;
@@ -41,13 +38,14 @@ public class MainActivity extends AppCompatActivity{
     FloatingActionButton fab;
     ListView chatView;
     TextToSpeech tts;
-    boolean isListening=false, isVideo=false, isError=false, isSpeaking=false;
+    boolean isListening=false, isVideo=false, isError=false;
     RelativeLayout tutorial, base;
     public ArrayList<String>movies;
     MessageAdapter movieAdapter;
     ProgressBar loop, line;
     List<ChatMessage> messageList;
     Button skip,next;
+    //text=https://gentle-ravine-18226.herokuapp.com/mBud/?msg=
     String currentText="", url ="https://gentle-ravine-18226.herokuapp.com/mBud/?msg=", result="";
     String c="";
     RequestQueue queue;
@@ -55,7 +53,6 @@ public class MainActivity extends AppCompatActivity{
     int pos=0;
     TextView tutorialText;
     ArrayList<String> videoMap, videoMap2, videoMap3;
-    Set<String> set;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +86,8 @@ public class MainActivity extends AppCompatActivity{
                 tutorial.setVisibility(View.INVISIBLE);
                 fab.setVisibility(View.VISIBLE);
                 pos=0;
+                String s="Hi! I am MovieBud.@@@I could search for specific movies, movies of a genre or movies similar to a title you like.@@@Click the mic and start exploring.";
+                help(s);
             }
         });
 
@@ -107,13 +106,7 @@ public class MainActivity extends AppCompatActivity{
         });
 
         queue = Volley.newRequestQueue(this);
-        set=new HashSet(){{
-           add("i would like to watch a movie");
-           add("i'd like to watch a movie");
-           add("watch a movie");
-           add("i like to watch a movie");
-           add("show me some movies");
-        }};
+
         movies=new ArrayList<String>(){{
             add("E.T.: The Extra-Terrestrial");
             add("Star Wars: Episode VI - Return of the Jedi");
@@ -160,7 +153,8 @@ public class MainActivity extends AppCompatActivity{
         videoMap = new ArrayList();
         videoMap.add("Click the link to watch the video!");
         videoMap.add("You know the drill! Just click the link.");
-        videoMap.add("Click the link, you should.");
+        videoMap.add("To watch the trailer click the link.");
+        videoMap.add("Click the link and enjoy the promo!");
 
         videoMap2 = new ArrayList();
         videoMap2.add("Or I could help you look for other movies.");
@@ -239,8 +233,12 @@ public class MainActivity extends AppCompatActivity{
         fab.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
-                isListening=true;
-                if(!isSpeaking){
+            isListening=true;
+                if(tts!=null){
+                    tts.speak("", TextToSpeech.QUEUE_FLUSH,null,null);
+                    tts.stop();
+                }
+                if(line.getVisibility()==View.INVISIBLE){
                     flipFAB();
                     recognizer.startListening(recognitionIntent);
                 }
@@ -256,87 +254,77 @@ public class MainActivity extends AppCompatActivity{
 
 
     public void sendRequest(){
-        if(set.contains(currentText.toLowerCase())){
-            c="Here are some movies for you!";
-            updateListView(new ChatMessage(2,c.toString(),false));
-
-            Handler handler=new Handler();
-            line.setVisibility(View.VISIBLE);
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Random rand=new Random();
-                    int i=0;
-                    while(i++<5)
-                        result+=movies.get(rand.nextInt(movies.size()))+"\n";
-                    String s=videoMap3.get(rand.nextInt(videoMap3.size()));
-                    speak(c+"@@@"+s);
-                    updateListView(new ChatMessage(3,result,false));
-                    updateListView(new ChatMessage(2,s,false));
-                    line.setVisibility(View.INVISIBLE);
-                }
-            }, 500);
-
-        }
-        else{
-            request= new JsonObjectRequest(Request.Method.GET,
-                    url + currentText,
-                    null,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            line.setVisibility(View.INVISIBLE);
-                            parseResult(currentText, response);
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    speak("I am sorry, I seem to be facing some technical difficulties!");
-                    line.setVisibility(View.INVISIBLE);
-                }
-            });
-            request.setRetryPolicy(new DefaultRetryPolicy(
-                    10000,
-                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-            // Add the request to the RequestQueue.
-            queue.add(request);
-            line.setVisibility(View.VISIBLE);
-        }
+        request= new JsonObjectRequest(Request.Method.GET,
+                url + currentText,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        line.setVisibility(View.INVISIBLE);
+                        parseResult(currentText, response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                speak("I am sorry, I seem to be facing some technical difficulties!");
+                line.setVisibility(View.INVISIBLE);
+            }
+        });
+        request.setRetryPolicy(new DefaultRetryPolicy(
+                10000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        // Add the request to the RequestQueue.
+        queue.add(request);
+        line.setVisibility(View.VISIBLE);
     }
 
     public void parseResult(String input, JSONObject response){
         Random rand = new Random();
         try {
-            if(response !=null && "Exact,Similar,Genre,Quest,Video".contains(response.get("State").toString())){
-                if(response.get("State").equals("Exact")){
+            if(response !=null && "Movies,Exact,Similar,Genre,Quest,Video,Help,NoSynopsis".contains(response.get("State").toString())){
+                String state=response.get("State").toString();
+                if(state.equals("Exact")){
                     c="Here are some results from the search for "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s=videoMap3.get(rand.nextInt(videoMap3.size()));
-                    speak(c+"@@@"+s);
+                    String t=videoMap2.get(rand.nextInt(videoMap2.size()));
+                    speak(c+"@@@"+s+"@@@"+t);
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
+                    updateListView(new ChatMessage(2,t,false));
                 }
-                else if(response.get("State").equals("Similar")){
+                else if(state.equals("Similar")){
                     c="Here are some movies similar to "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
-                    String s=videoMap3.get(rand.nextInt(videoMap3.size()));
-                    speak(c+"@@@"+s);
-                    updateListView(new ChatMessage(3,result,false));
-                    updateListView(new ChatMessage(2,s,false));
+                    if(result==""){
+                        c="I'm sorry I could not find any results for "+input+".";
+                        updateListView(new ChatMessage(2,c.toString(),false));
+                        speak(c);
+                    }
+                    else{
+                        String s=videoMap3.get(rand.nextInt(videoMap3.size()));
+                        speak(c+"@@@"+s);
+                        updateListView(new ChatMessage(3,result,false));
+                        updateListView(new ChatMessage(2,s,false));
+                    }
                 }
-                else if(response.get("State").equals("Genre")){
-                    c="Here are some results from the "+response.get("Input")+" genre.";
+                else if(state.equals("Genre")){
+                    if(response.get("input")=="new")c="Here are some "+response.get("Input")+" movies for you.";
+                    else c="Here are some "+response.get("Input")+" movies for you.";
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
                     String s=videoMap3.get(rand.nextInt(videoMap3.size()));
-                    speak(c+"@@@"+s);
+                    String t=videoMap2.get(rand.nextInt(videoMap2.size()));
+                    speak(c+"@@@"+s+"@@@"+t);
+
                     updateListView(new ChatMessage(3,result,false));
                     updateListView(new ChatMessage(2,s,false));
+                    updateListView(new ChatMessage(2,t,false));
                 }
-                else if(response.get("State").equals("Video")){
+                else if(state.equals("Video")){
                     c="Here is the link to the trailer of "+response.get("Input");
                     updateListView(new ChatMessage(2,c.toString(),false));
                     result=response.get("Content").toString();
@@ -347,6 +335,45 @@ public class MainActivity extends AppCompatActivity{
                     updateListView(new ChatMessage(4,result,true));
                     updateListView(new ChatMessage(2,s,false));
                     updateListView(new ChatMessage(2,t,false));
+                }
+                else if(state.equals("Help")){
+                    String t="I could search for specific movies, movies of a genre or movies similar to a title you like.";
+                    help(t);
+                }
+                else if(state.equals("Synopsis")){
+                    String s="Here is what I found about "+response.get("Input")+".";
+                    result=response.get("Content").toString();
+                    updateListView(new ChatMessage(2,s,true));
+                    updateListView(new ChatMessage(3,result,true));
+                    speak(s+"@@@"+result);
+                }
+                else if(state.equals("NoSynopsis")){
+                    String v="I'm sorry, I could not find a synopsis for "+response.get("Input")+".";
+                    updateListView(new ChatMessage(2,v,false));
+                    c="Here is the link to its trailer instead.";
+                    updateListView(new ChatMessage(2,c.toString(),false));
+                    result=response.get("Content").toString();
+
+                    String t=videoMap2.get(rand.nextInt(videoMap2.size()));
+                    speak(v+"@@@"+c+"@@@"+t);
+                    updateListView(new ChatMessage(4,result,true));
+                    updateListView(new ChatMessage(2,t,false));
+                }
+                else if(state.equals("Movies")){
+                    c="Here are some movies for you";
+                    updateListView(new ChatMessage(2,c.toString(),false));
+                    result=response.get("Content").toString();
+
+                    int i=0;
+                    while(i++<5)
+                        result+=movies.get(rand.nextInt(movies.size()))+"\n";
+                    String s=videoMap3.get(rand.nextInt(videoMap3.size()));
+                    String t=videoMap2.get(rand.nextInt(videoMap2.size()));
+                    speak(c+"@@@"+s+"@@@"+t);
+                    updateListView(new ChatMessage(3,result,false));
+                    updateListView(new ChatMessage(2,s,false));
+                    updateListView(new ChatMessage(2,t,false));
+
                 }
                 else {
                     result=response.get("Content").toString();
@@ -377,7 +404,6 @@ public class MainActivity extends AppCompatActivity{
         tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int i) {
-                isSpeaking=true;
                 for(String ip:input.split("@@@")){
                     tts.speak(ip, TextToSpeech.QUEUE_ADD,null,null);
                     tts.playSilentUtterance(100,TextToSpeech.QUEUE_ADD,null);
@@ -395,7 +421,6 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onDone(String s) {
                 tts.shutdown();
-                isSpeaking=false;
             }
             @Override
             public void onError(String s) {}
@@ -423,5 +448,11 @@ public class MainActivity extends AppCompatActivity{
             fab.setClickable(true);
             fab.setAlpha((float)0.5);
         }
+    }
+
+    public void help(String s){
+        for(String i:s.split("@@@"))
+            updateListView(new ChatMessage(2,i,false));
+        speak(s);
     }
 }
